@@ -1,0 +1,119 @@
+
+version: 2
+
+models:
+  - name: my_first_dbt_model
+    description: "A starter dbt model"
+    columns:
+      - name: id
+        description: "The primary key for this table"
+        data_tests:
+          - unique
+          - not_null
+
+  - name: my_second_dbt_model
+    description: "A starter dbt model"
+    columns:
+      - name: id
+        description: "The primary key for this table"
+        data_tests:
+          - unique
+          - not_null
+
+
+sources:
+  - name: raw
+    schema: raw  
+    tables:
+      - name: organizations
+        description: >
+          This table contains information about Dialogue's customers, which we call _organizations_.
+          Organizations determine which programs their members are eligible to use while they're enrolled.
+
+          Data is extracted from the eligibility system in a nightly batch, and each batch is appended 
+          to this table along with the `loaded_at` timestamp, which identifies the batch.
+        columns:
+          - name: id
+            description: Uniquely identifies the organization among all others in the same batch
+          - name: name
+            description: The name of the organization. This is the name that members see when they log in.
+          - name: created_at
+            description: The date the organization was created in the eligibility system.
+          - name: churned_at
+            description: >
+              The date the organization terminated its contract with Dialogue. When the value is null,
+              it means the organization is still active.
+          - name: programs
+            description: >
+              The Dialogue services that the organization has subscribed its members to. Members are
+              eligible to use these services during the period of time that they are enrolled in this
+              organization.
+          - name: loaded_at
+            description: > 
+              The date the data was loaded into the warehouse. This is the date of the batch that
+              contains this row. It is used to identify the batch of data that this row belongs to.
+      - name: members
+        description: >
+          This table contains information about Dialogue's users, which we call _members_.
+          Members enrol with organizations, and this determines which programs they're eligible
+          to use. Members maintain their own profile, including their email, date of birth, and 
+          province of residence which may change over time. 
+
+          Data is extracted from the eligibility system in a nightly batch, and each batch is appended 
+          to this table along with the `loaded_at` timestamp, which identifies the batch.
+        columns:
+          - name: id
+            description: Uniquely identifies the member among all others in the same batch.
+          - name: created_at
+            description: The date the member was created in the eligibility system.
+          - name: name
+            description: The full name of the member.
+          - name: email
+            description: >
+              The member's email address, for the purpose of logging into their account and receiving
+              marketing and transactional communications from Dialogue.
+          - name: date_of_birth
+            description: The member's date of birth.
+          - name: province_of_residence
+            description: >
+              The province in which the member resides. This can change over time if the member moves
+              between provinces.
+          - name: organization_id
+            description: >
+              A reference to the organization that the member in enrolled in. This can change over time
+              if the member enrols in a different organization.
+          - name: eligible_programs
+            description: >
+              An array of the Dialogue services that the member is eligible to use at the end of a calendar day.
+              This is determined by the organization(s) that the member is enrolled in.
+          - name: loaded_at
+            description: > 
+              The date the data was loaded into the warehouse. This is the date of the batch that
+              contains this row. It is used to identify the batch of data that this row belongs to.
+      - name: events
+        description: >
+          This table contains point-in-time events reported by the software. Each event has a timestamp,
+          a type, and some payload data in JSON format. The data for each event type is different. For now,
+          there is only one event type, `episode_properties`, but other events may be added in the future.
+          
+          #### `episode_properties` event type
+          This event is emitted whenever an episode's state is updated. The payload contains
+          a representation of the episode's state after the change. Episode state consists of:
+          - `episode_id`: Uniquely identifies the episode among all others.
+          - `subject_member_id`: Refers to the id of the member that is consulting in the episode.
+          - `issue_type`: The category of health or wellness issue that the member is presenting with.
+          - `triage_recommendation`: The recommended next step for the member after triage.
+          - `status`: The status of the episode; may be `pending` or `resolved`.
+
+          Event data is loaded incrementally into the warehouse as it is collected.
+        columns:
+          - name: event_id
+            description: Uniquely identifies the event among all others.
+          - name: timestamp
+            description: The date and time that the event was emitted.
+          - name: event_type
+            description: The type of event that was emitted.
+          - name: data
+            description: >
+              The raw payload data of the event, in JSON format.
+              The structure of this object depends on the type of event that was emitted.

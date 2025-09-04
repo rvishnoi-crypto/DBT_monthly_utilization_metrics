@@ -1,0 +1,8 @@
+
+data_mart:
+  target: main # this is the default target
+  outputs:
+    main:
+      type: duckdb
+      path: '../data/data_warehouse.duckdb'
+      schema: data_mart
