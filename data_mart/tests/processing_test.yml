@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: processed_members
+    description: "Cleaned and transformed member data from raw.members"
+    columns:
+      - name: member_id
+        description: "Unique identifier for each member"
+        tests:
+          - not_null
+
+      - name: name
+        description: "Member's full name"
+        tests:
+          - not_null
+
+      - name: email
+        description: "Member's email address"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_match_like_pattern:
+              like_pattern: '%@%.%'
+
+      - name: date_of_birth
+        description: "Member's date of birth"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "cast('1900-01-01' as date)"
+              max_value: "cast('2030-01-01' as date)"
+
+      - name: province
+        description: "Province of residence"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ['ON', 'QC', 'BC', 'AB', 'MB', 'SK', 'NS', 'NB', 'NL', 'PE', 'YT', 'NT', 'NU']
+
+      - name: organization_id
+        description: "Foreign key to organization"
+        tests:
+          - not_null
+
+      - name: eligible_programs
+        description: "List of programs the member is eligible for"
+        tests:
+          - not_null
+
+      - name: created_at
+        description: "Date the member was originally created"
+        tests:
+          - not_null
+
+      - name: raw_loaded_at
+        description: "Timestamp when the record was loaded from raw source"
+        tests:
+          - not_null
+
+      - name: process_load_ts
+        description: "Timestamp when the record was processed"
+        tests:
+          - not_null
