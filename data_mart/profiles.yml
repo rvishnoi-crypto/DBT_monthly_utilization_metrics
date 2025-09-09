@@ -1,4 +1,3 @@
-
 data_mart:
   target: main # this is the default target
   outputs:
